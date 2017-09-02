@@ -1,2 +1,2 @@
-# WebBlogByPython
+# webapp-python
 First Python Web App
