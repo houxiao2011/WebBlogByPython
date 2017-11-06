@@ -13,8 +13,6 @@ import logging
 import sqlite3
 
 
-# Dict Object
-
 class Dict(dict):
     def __init__(self, names=(), values=(), **kw):
         super(Dict, self).__init__(**kw)
@@ -30,17 +28,19 @@ class Dict(dict):
     def __setattr__(self, key, value):
         self[key] = value
 
-    def next_id(t=None):
-        if t is None:
-            t = time.time()
-        return '%015d%s000' % (int(t * 1000), uuid.uuid4().hex)
 
-    def _profiling(start, sql=''):
-        t = time.time() - start
-        if t > 0.1:
-            logging.warning('[PROFILING] [DB] %s: %s' % (t, sql))
-        else:
-            logging.info('[PROFILING] [DB] %s: %s' % (t, sql))
+def next_id(t=None):
+    if t is None:
+        t = time.time()
+    return '%015d%s000' % (int(t * 1000), uuid.uuid4().hex)
+
+
+def _profiling(start, sql=''):
+    t = time.time() - start
+    if t > 0.1:
+        logging.warning('[PROFILING] [DB] %s: %s' % (t, sql))
+    else:
+        logging.info('[PROFILING] [DB] %s: %s' % (t, sql))
 
 
 class DBError(Exception):
@@ -296,20 +296,3 @@ def insert(table, **kw):
 def update(sql, *args):
     return _update(sql, *args)
 
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    create_engine('www-data')
-    update('drop table if exists user')
-    update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
-
-    u1 = dict(id=2000, name='Bob', email='bob@test.org', passwd='bobobob', last_modified=time.time())
-    insert('user', **u1)
-
-    update('update user set email=?, passwd=? where id=?', 'michael@example.org', '654321', 2000)
-
-    u2 = select_one('select * from user where id=?', 2000)
-    print u2.email
-
-    import doctest
-    doctest.testmod()
