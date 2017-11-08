@@ -6,6 +6,7 @@ A simple, lightweight, WSGI-compatible web framework.
 """
 
 import types, os, re, cgi, sys, time, datetime, functools, mimetypes, threading, logging, urllib, traceback
+from cookielib import _debug
 
 try:
     from cStringIO import StringIO
@@ -249,9 +250,9 @@ class HttpError(Exception):
     """
 
     def __init__(self, code):
-        '''
+        """
         Init an HttpError with response code.
-        '''
+        """
         super(HttpError, self).__init__()
         self.status = '%d %s' % (code, _RESPONSE_STATUSES[code])
 
@@ -283,9 +284,9 @@ class RedirectError(HttpError):
     """
 
     def __init__(self, code, location):
-        '''
+        """
         Init an HttpError with response code.
-        '''
+        """
         super(RedirectError, self).__init__(code)
         self.location = location
 
@@ -518,11 +519,11 @@ def _build_regex(path):
         else:
             s = ''
             for ch in v:
-                if ch >= '0' and ch <= '9':
+                if '0' <= ch <= '9':
                     s = s + ch
-                elif ch >= 'A' and ch <= 'Z':
+                elif 'A' <= ch <= 'Z':
                     s = s + ch
-                elif ch >= 'a' and ch <= 'z':
+                elif 'a' <= ch <= 'z':
                     s = s + ch
                 else:
                     s = s + '\\' + ch
@@ -591,8 +592,8 @@ class StaticFileRoute(object):
         return _static_file_generator(fpath)
 
 
-def favicon_handler():
-    return static_file_handler('/favicon.ico')
+# def favicon_handler():
+#     return static_file_handler('/favicon.ico')
 
 
 class MultipartFile(object):
@@ -631,15 +632,15 @@ class Request(object):
         return inputs
 
     def _get_raw_input(self):
-        '''
+        """
         Get raw input as dict containing values as unicode, list or MultipartFile.
-        '''
+        """
         if not hasattr(self, '_raw_input'):
             self._raw_input = self._parse_input()
         return self._raw_input
 
     def __getitem__(self, key):
-        '''
+        """
         Get input parameter value. If the specified key has multiple value, the first one is returned.
         If the specified key is not exist, then raise KeyError.
         >>> from StringIO import StringIO
@@ -665,14 +666,14 @@ class Request(object):
         u'test.txt'
         >>> f.file.read()
         'just a test'
-        '''
+        """
         r = self._get_raw_input()[key]
         if isinstance(r, list):
             return r[0]
         return r
 
     def get(self, key, default=None):
-        '''
+        """
         The same as request[key], but return default value if key is not found.
         >>> from StringIO import StringIO
         >>> r = Request({'REQUEST_METHOD':'POST', 'wsgi.input':StringIO('a=1&b=M%20M&c=ABC&c=XYZ&e=')})
@@ -681,14 +682,14 @@ class Request(object):
         >>> r.get('empty')
         >>> r.get('empty', 'DEFAULT')
         'DEFAULT'
-        '''
+        """
         r = self._get_raw_input().get(key, default)
         if isinstance(r, list):
             return r[0]
         return r
 
     def gets(self, key):
-        '''
+        """
         Get multiple values for specified key.
         >>> from StringIO import StringIO
         >>> r = Request({'REQUEST_METHOD':'POST', 'wsgi.input':StringIO('a=1&b=M%20M&c=ABC&c=XYZ&e=')})
@@ -700,14 +701,14 @@ class Request(object):
         Traceback (most recent call last):
             ...
         KeyError: 'empty'
-        '''
+        """
         r = self._get_raw_input()[key]
         if isinstance(r, list):
             return r[:]
         return [r]
 
     def input(self, **kw):
-        '''
+        """
         Get input as dict from request, fill dict using provided default value if key not exist.
         i = ctx.request.input(role='guest')
         i.role ==> 'guest'
@@ -726,7 +727,7 @@ class Request(object):
         u'100'
         >>> i.x
         2008
-        '''
+        """
         copy = Dict(**kw)
         raw = self._get_raw_input()
         for k, v in raw.iteritems():
@@ -734,39 +735,39 @@ class Request(object):
         return copy
 
     def get_body(self):
-        '''
+        """
         Get raw data from HTTP POST and return as str.
         >>> from StringIO import StringIO
         >>> r = Request({'REQUEST_METHOD':'POST', 'wsgi.input':StringIO('<xml><raw/>')})
         >>> r.get_body()
         '<xml><raw/>'
-        '''
+        """
         fp = self._environ['wsgi.input']
         return fp.read()
 
     @property
     def remote_addr(self):
-        '''
+        """
         Get remote addr. Return '0.0.0.0' if cannot get remote_addr.
         >>> r = Request({'REMOTE_ADDR': '192.168.0.100'})
         >>> r.remote_addr
         '192.168.0.100'
-        '''
+        """
         return self._environ.get('REMOTE_ADDR', '0.0.0.0')
 
     @property
     def document_root(self):
-        '''
+        """
         Get raw document_root as str. Return '' if no document_root.
         >>> r = Request({'DOCUMENT_ROOT': '/srv/path/to/doc'})
         >>> r.document_root
         '/srv/path/to/doc'
-        '''
+        """
         return self._environ.get('DOCUMENT_ROOT', '')
 
     @property
     def query_string(self):
-        '''
+        """
         Get raw query string as str. Return '' if no query string.
         >>> r = Request({'QUERY_STRING': 'a=1&c=2'})
         >>> r.query_string
@@ -774,12 +775,12 @@ class Request(object):
         >>> r = Request({})
         >>> r.query_string
         ''
-        '''
+        """
         return self._environ.get('QUERY_STRING', '')
 
     @property
     def environ(self):
-        '''
+        """
         Get raw environ as dict, both key, value are str.
         >>> r = Request({'REQUEST_METHOD': 'GET', 'wsgi.url_scheme':'http'})
         >>> r.environ.get('REQUEST_METHOD')
@@ -789,12 +790,12 @@ class Request(object):
         >>> r.environ.get('SERVER_NAME')
         >>> r.environ.get('SERVER_NAME', 'unamed')
         'unamed'
-        '''
+        """
         return self._environ
 
     @property
     def request_method(self):
-        '''
+        """
         Get request method. The valid returned values are 'GET', 'POST', 'HEAD'.
         >>> r = Request({'REQUEST_METHOD': 'GET'})
         >>> r.request_method
@@ -802,27 +803,27 @@ class Request(object):
         >>> r = Request({'REQUEST_METHOD': 'POST'})
         >>> r.request_method
         'POST'
-        '''
+        """
         return self._environ['REQUEST_METHOD']
 
     @property
     def path_info(self):
-        '''
+        """
         Get request path as str.
         >>> r = Request({'PATH_INFO': '/test/a%20b.html'})
         >>> r.path_info
         '/test/a b.html'
-        '''
+        """
         return urllib.unquote(self._environ.get('PATH_INFO', ''))
 
     @property
     def host(self):
-        '''
+        """
         Get request host as str. Default to '' if cannot get host..
         >>> r = Request({'HTTP_HOST': 'localhost:8080'})
         >>> r.host
         'localhost:8080'
-        '''
+        """
         return self._environ.get('HTTP_HOST', '')
 
     def _get_headers(self):
@@ -837,7 +838,7 @@ class Request(object):
 
     @property
     def headers(self):
-        '''
+        """
         Get all HTTP headers with key as str and value as unicode. The header names are 'XXX-XXX' uppercase.
         >>> r = Request({'HTTP_USER_AGENT': 'Mozilla/5.0', 'HTTP_ACCEPT': 'text/html'})
         >>> H = r.headers
@@ -849,11 +850,11 @@ class Request(object):
         >>> L.sort()
         >>> L
         [('ACCEPT', u'text/html'), ('USER-AGENT', u'Mozilla/5.0')]
-        '''
+        """
         return dict(**self._get_headers())
 
     def header(self, header, default=None):
-        '''
+        """
         Get header from request as unicode, return None if not exist, or default if specified.
         The header name is case-insensitive such as 'USER-AGENT' or u'content-Type'.
         >>> r = Request({'HTTP_USER_AGENT': 'Mozilla/5.0', 'HTTP_ACCEPT': 'text/html'})
@@ -866,7 +867,7 @@ class Request(object):
         >>> r.header('Test')
         >>> r.header('Test', u'DEFAULT')
         u'DEFAULT'
-        '''
+        """
         return self._get_headers().get(header.upper(), default)
 
     def _get_cookies(self):
@@ -883,18 +884,18 @@ class Request(object):
 
     @property
     def cookies(self):
-        '''
+        """
         Return all cookies as dict. The cookie name is str and values is unicode.
         >>> r = Request({'HTTP_COOKIE':'A=123; url=http%3A%2F%2Fwww.example.com%2F'})
         >>> r.cookies['A']
         u'123'
         >>> r.cookies['url']
         u'http://www.example.com/'
-        '''
+        """
         return Dict(**self._get_cookies())
 
     def cookie(self, name, default=None):
-        '''
+        """
         Return specified cookie value as unicode. Default to None if cookie not exists.
         >>> r = Request({'HTTP_COOKIE':'A=123; url=http%3A%2F%2Fwww.example.com%2F'})
         >>> r.cookie('A')
@@ -904,7 +905,7 @@ class Request(object):
         >>> r.cookie('test')
         >>> r.cookie('test', u'DEFAULT')
         u'DEFAULT'
-        '''
+        """
         return self._get_cookies().get(name, default)
 
 
@@ -918,7 +919,7 @@ class Response(object):
 
     @property
     def headers(self):
-        '''
+        """
         Return response headers as [(key1, value1), (key2, value2)...] including cookies.
         >>> r = Response()
         >>> r.headers
@@ -926,7 +927,7 @@ class Response(object):
         >>> r.set_cookie('s1', 'ok', 3600)
         >>> r.headers
         [('Content-Type', 'text/html; charset=utf-8'), ('Set-Cookie', 's1=ok; Max-Age=3600; Path=/; HttpOnly'), ('X-Powered-By', 'transwarp/1.0')]
-        '''
+        """
         L = [(_RESPONSE_HEADER_DICT.get(k, k), v) for k, v in self._headers.iteritems()]
         if hasattr(self, '_cookies'):
             for v in self._cookies.itervalues():
@@ -935,7 +936,7 @@ class Response(object):
         return L
 
     def header(self, name):
-        '''
+        """
         Get header by name, case-insensitive.
         >>> r = Response()
         >>> r.header('content-type')
@@ -943,21 +944,21 @@ class Response(object):
         >>> r.header('CONTENT-type')
         'text/html; charset=utf-8'
         >>> r.header('X-Powered-By')
-        '''
+        """
         key = name.upper()
         if not key in _RESPONSE_HEADER_DICT:
             key = name
         return self._headers.get(key)
 
     def unset_header(self, name):
-        '''
+        """
         Unset header by name and value.
         >>> r = Response()
         >>> r.header('content-type')
         'text/html; charset=utf-8'
         >>> r.unset_header('CONTENT-type')
         >>> r.header('content-type')
-        '''
+        """
         key = name.upper()
         if not key in _RESPONSE_HEADER_DICT:
             key = name
@@ -965,7 +966,7 @@ class Response(object):
             del self._headers[key]
 
     def set_header(self, name, value):
-        '''
+        """
         Set header by name and value.
         >>> r = Response()
         >>> r.header('content-type')
@@ -973,7 +974,7 @@ class Response(object):
         >>> r.set_header('CONTENT-type', 'image/png')
         >>> r.header('content-TYPE')
         'image/png'
-        '''
+        """
         key = name.upper()
         if not key in _RESPONSE_HEADER_DICT:
             key = name
@@ -981,7 +982,7 @@ class Response(object):
 
     @property
     def content_type(self):
-        '''
+        """
         Get content type from response. This is a shortcut for header('Content-Type').
         >>> r = Response()
         >>> r.content_type
@@ -989,14 +990,14 @@ class Response(object):
         >>> r.content_type = 'application/json'
         >>> r.content_type
         'application/json'
-        '''
+        """
         return self.header('CONTENT-TYPE')
 
     @content_type.setter
     def content_type(self, value):
-        '''
+        """
         Set content type for response. This is a shortcut for set_header('Content-Type', value).
-        '''
+        """
         if value:
             self.set_header('CONTENT-TYPE', value)
         else:
@@ -1004,19 +1005,19 @@ class Response(object):
 
     @property
     def content_length(self):
-        '''
+        """
         Get content length. Return None if not set.
         >>> r = Response()
         >>> r.content_length
         >>> r.content_length = 100
         >>> r.content_length
         '100'
-        '''
+        """
         return self.header('CONTENT-LENGTH')
 
     @content_length.setter
     def content_length(self, value):
-        '''
+        """
         Set content length, the value can be int or str.
         >>> r = Response()
         >>> r.content_length = '1024'
@@ -1025,19 +1026,19 @@ class Response(object):
         >>> r.content_length = 1024 * 8
         >>> r.content_length
         '8192'
-        '''
+        """
         self.set_header('CONTENT-LENGTH', str(value))
 
     def delete_cookie(self, name):
-        '''
+        """
         Delete a cookie immediately.
         Args:
           name: the cookie name.
-        '''
+        """
         self.set_cookie(name, '__deleted__', expires=0)
 
     def set_cookie(self, name, value, max_age=None, expires=None, path='/', domain=None, secure=False, http_only=True):
-        '''
+        """
         Set a cookie.
         Args:
           name: the cookie name.
@@ -1061,7 +1062,7 @@ class Response(object):
         >>> r.set_cookie('company', 'Expires', expires=dt)
         >>> r._cookies
         {'company': 'company=Expires; Expires=Sat, 14-Jul-2012 14:06:34 GMT; Path=/; HttpOnly'}
-        '''
+        """
         if not hasattr(self, '_cookies'):
             self._cookies = {}
         L = ['%s=%s' % (_quote(name), _quote(value))]
@@ -1083,7 +1084,7 @@ class Response(object):
         self._cookies[name] = '; '.join(L)
 
     def unset_cookie(self, name):
-        '''
+        """
         Unset a cookie.
         >>> r = Response()
         >>> r.set_cookie('company', 'Abc, Inc.', max_age=3600)
@@ -1092,14 +1093,14 @@ class Response(object):
         >>> r.unset_cookie('company')
         >>> r._cookies
         {}
-        '''
+        """
         if hasattr(self, '_cookies'):
             if name in self._cookies:
                 del self._cookies[name]
 
     @property
     def status_code(self):
-        '''
+        """
         Get response status code as int.
         >>> r = Response()
         >>> r.status_code
@@ -1110,12 +1111,12 @@ class Response(object):
         >>> r.status = '500 Internal Error'
         >>> r.status_code
         500
-        '''
+        """
         return int(self._status[:3])
 
     @property
     def status(self):
-        '''
+        """
         Get response status. Default to '200 OK'.
         >>> r = Response()
         >>> r.status
@@ -1126,12 +1127,12 @@ class Response(object):
         >>> r.status = '500 Oh My God'
         >>> r.status
         '500 Oh My God'
-        '''
+        """
         return self._status
 
     @status.setter
     def status(self, value):
-        '''
+        """
         Set response status as int or str.
         >>> r = Response()
         >>> r.status = 404
@@ -1155,9 +1156,9 @@ class Response(object):
         Traceback (most recent call last):
           ...
         TypeError: Bad type of response code.
-        '''
+        """
         if isinstance(value, (int, long)):
-            if value >= 100 and value <= 999:
+            if 100 <= value <= 999:
                 st = _RESPONSE_STATUSES.get(value, '')
                 if st:
                     self._status = '%d %s' % (value, st)
@@ -1178,7 +1179,7 @@ class Response(object):
 
 class Template(object):
     def __init__(self, template_name, **kw):
-        '''
+        """
         Init a template object with template name, model as dict, and additional kw that will append to model.
         >>> t = Template('hello.html', title='Hello', copyright='@2012')
         >>> t.model['title']
@@ -1188,29 +1189,29 @@ class Template(object):
         >>> t = Template('test.html', abc=u'ABC', xyz=u'XYZ')
         >>> t.model['abc']
         u'ABC'
-        '''
+        """
         self.template_name = template_name
         self.model = dict(**kw)
 
 
 class TemplateEngine(object):
-    '''
+    """
     Base template engine.
-    '''
+    """
 
     def __call__(self, path, model):
         return '<!-- override this method to render template -->'
 
 
 class Jinja2TemplateEngine(TemplateEngine):
-    '''
+    """
     Render using jinja2 template engine.
     >>> templ_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'test')
     >>> engine = Jinja2TemplateEngine(templ_path)
     >>> engine.add_filter('datetime', lambda dt: dt.strftime('%Y-%m-%d %H:%M:%S'))
     >>> engine('jinja2-test.html', dict(name='Michael', posted_at=datetime.datetime(2014, 6, 1, 10, 11, 12)))
     '<p>Hello, Michael.</p><span>2014-06-01 10:11:12</span>'
-    '''
+    """
 
     def __init__(self, templ_dir, **kw):
         from jinja2 import Environment, FileSystemLoader
@@ -1240,7 +1241,7 @@ def _default_error_handler(e, start_response, is_debug):
 
 
 def view(path):
-    '''
+    """
     A view decorator that render a view by dict.
     >>> @view('test/view.html')
     ... def hello():
@@ -1257,7 +1258,7 @@ def view(path):
     Traceback (most recent call last):
       ...
     ValueError: Expect return a dict when using @view() decorator.
-    '''
+    """
 
     def _decorator(func):
         @functools.wraps(func)
@@ -1288,12 +1289,12 @@ def _build_pattern_fn(pattern):
 
 
 def interceptor(pattern='/'):
-    '''
+    """
     An @interceptor decorator.
     @interceptor('/admin/')
     def check_admin(req, resp):
         pass
-    '''
+    """
 
     def _decorator(func):
         func.__interceptor__ = _build_pattern_fn(pattern)
@@ -1313,7 +1314,7 @@ def _build_interceptor_fn(func, next):
 
 
 def _build_interceptor_chain(last_fn, *interceptors):
-    '''
+    """
     Build interceptor chain.
     >>> def target():
     ...     print 'target'
@@ -1353,7 +1354,7 @@ def _build_interceptor_chain(last_fn, *interceptors):
     target
     after f3()
     123
-    '''
+    """
     L = list(interceptors)
     L.reverse()
     fn = last_fn
@@ -1363,7 +1364,7 @@ def _build_interceptor_chain(last_fn, *interceptors):
 
 
 def _load_module(module_name):
-    '''
+    """
     Load module from name as str.
     >>> m = _load_module('xml')
     >>> m.__name__
@@ -1374,7 +1375,7 @@ def _load_module(module_name):
     >>> m = _load_module('xml.sax.handler')
     >>> m.__name__
     'xml.sax.handler'
-    '''
+    """
     last_dot = module_name.rfind('.')
     if last_dot == (-1):
         return __import__(module_name, globals(), locals())
@@ -1386,11 +1387,11 @@ def _load_module(module_name):
 
 class WSGIApplication(object):
     def __init__(self, document_root=None, **kw):
-        '''
+        """
         Init a WSGIApplication.
         Args:
           document_root: document root path.
-        '''
+        """
         self._running = False
         self._document_root = document_root
 
